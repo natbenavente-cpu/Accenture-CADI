@@ -1,5 +1,6 @@
 <html lang="ca"><head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CADI · Planificació Tècnica</title>
 <style>
@@ -364,7 +365,7 @@
     <div id="sharepoint-warning" style="display:none;background:#E67E22;color:#fff;font-size:11px;padding:4px 12px;border-radius:3px;margin-right:8px;">
     ⚠ Mode SharePoint: usa <b>Exportar estat</b> per desar i compartir canvis
   </div>
-  <div class="meta" id="meta-text">Inici: 22/06/2026 · Jun 9h(6hDv) · Jul-15Sep 7h(6hDv) · +16Sep 9h(6hDv) · Fi previst: 30/07/2026 · Dev1: Jairo · Dev2: Dani · Dev3: Cyntia · Dev5: Fidel · Dev6: Carlos · Dev7 · Func1: Natalia · Func2: Laura · Func3: Isabel</div>
+  <div class="meta" id="meta-text"><span id="realtime-status" style="color:#E67E22;margin-right:8px;">🟡 Connectant...</span>Inici: 22/06/2026 · Jun 9h(6hDv) · Jul-15Sep 7h(6hDv) · +16Sep 9h(6hDv) · Fi previst: 30/07/2026 · Dev1: Jairo · Dev2: Dani · Dev3: Cyntia · Dev5: Fidel · Dev6: Carlos · Dev7 · Func1: Natalia · Func2: Laura · Func3: Isabel</div>
   </div>
   <div class="topbar-actions">
     <button class="btn btn-outline" onclick="openTeam()">👥 Equip</button>
@@ -1872,6 +1873,47 @@ const PHASE_SEPS = [
 const SUPABASE_URL = 'https://blcvajtldbnqpnyqbebk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134';
 const RECORD_ID = 'planificacio-re-plantilles';
+
+// ── SUPABASE REALTIME ─────────────────────────────────────────────────
+let supabaseClient = null;
+let realtimeChannel = null;
+let isReceivingUpdate = false;
+
+function initSupabase() {
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    realtimeChannel = supabaseClient
+      .channel('cadi_data_changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'cadi_data',
+        filter: 'id=eq.' + RECORD_ID
+      }, (payload) => {
+        if (isReceivingUpdate) return;
+        isReceivingUpdate = true;
+        const parsed = payload.new.data;
+        if (parsed && parsed.tasks && parsed.tasks.length > 0) {
+          tasks = parsed.tasks;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          if (parsed.team) { team = parsed.team; localStorage.setItem(TEAM_KEY, JSON.stringify(team)); }
+          if (parsed.alma) { witAlmaMap = parsed.alma; localStorage.setItem(ALMA_KEY, JSON.stringify(witAlmaMap)); }
+          render(); updateSummary();
+          showToast('🔄 Dades actualitzades per un altre usuari · ' + new Date().toLocaleTimeString('ca'));
+        }
+        setTimeout(() => { isReceivingUpdate = false; }, 2000);
+      })
+      .subscribe((status) => {
+        console.log('Realtime status:', status);
+        if (status === 'SUBSCRIBED') {
+          const el = document.getElementById('realtime-status');
+          if (el) { el.textContent = '🟢 Connectat'; el.style.color = '#1ABC9C'; }
+        }
+      });
+  } catch(e) {
+    console.warn('Supabase Realtime init failed:', e);
+  }
+}
 
 const STORAGE_KEY = 'cadi_plan_v5';
 
@@ -3611,6 +3653,7 @@ function showToast(msg) {
 // INIT
 // ─────────────────────────────────────────────────────────────────────
 window.onload=async function() {
+  initSupabase();
   loadData();
   loadTeam(); updateTopbarNames();
   loadAlmaMap();
