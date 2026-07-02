@@ -1868,9 +1868,10 @@ const PHASE_SEPS = [
   {after:null,  fase:'Funcional', label:'TASQUES FUNCIONALS FINALS — QA i sign-off (un cop el dev desplegat)'},
 ];
 
-const GIST_TOKEN = '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';
-const GIST_FILENAME = 'cadi_plan_data.json';
-const GIST_ID = '96fdef3db0f5968b4745c908b7321e5f'; let gistId = GIST_ID;
+// ── SUPABASE CONFIG ──────────────────────────────────────────────────
+const SUPABASE_URL = 'https://blcvajtldbnqpnyqbebk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134';
+const RECORD_ID = 'planificacio-re-plantilles';
 
 const STORAGE_KEY = 'cadi_plan_v5';
 
@@ -1898,66 +1899,56 @@ function saveData() {
 
 // ── GITHUB GIST SYNC ─────────────────────────────────────────────────
 async function syncToGist() {
-
   const btn = document.getElementById('btn-gist-sync');
-  if (btn) { btn.textContent = '☁ Sincronitzant...'; btn.disabled = true; btn.style.background='#555'; }
-  const payload = JSON.stringify({ tasks, team, alma: witAlmaMap });
+  if (btn) { btn.textContent = '☁ Desant...'; btn.disabled = true; btn.style.background='#555'; }
+  const payload = { tasks, team, alma: witAlmaMap };
   try {
-    let resp, data;
-    if (!gistId) {
-      // CREATE new Gist
-      resp = await fetch('https://api.github.com/gists', {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + GIST_TOKEN, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: 'CADI Planificació Tècnica RE Plantilles', public: false,
-          files: { [GIST_FILENAME]: { content: payload } } })
-      });
-      data = await resp.json();
-      gistId = data.id;
-      localStorage.setItem('cadi_gist_id_v2', gistId);
-      showToast('✅ Gist creat i sincronitzat! ID: ' + gistId);
+    const resp = await fetch('https://blcvajtldbnqpnyqbebk.supabase.co/rest/v1/cadi_data?id=eq.planificacio-re-plantilles', {
+      method: 'PATCH',
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ data: payload, updated_at: new Date().toISOString() })
+    });
+    if (resp.ok) {
+      showToast('✅ Desat al núvol · ' + new Date().toLocaleTimeString('ca'));
+      if (btn) { btn.textContent = '✅ Desat'; btn.style.background='#1E6832'; btn.disabled = false; }
+      setTimeout(() => { if(btn){btn.textContent='💾 Desar';btn.style.background='';btn.className='btn btn-primary';} }, 3000);
     } else {
-      // UPDATE existing Gist
-      resp = await fetch('https://api.github.com/gists/' + gistId, {
-        method: 'PATCH',
-        headers: { 'Authorization': 'token ' + GIST_TOKEN, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: { [GIST_FILENAME]: { content: payload } } })
-      });
-      data = await resp.json();
-      showToast('✅ Dades sincronitzades al núvol · ' + new Date().toLocaleTimeString('ca'));
+      throw new Error('HTTP ' + resp.status);
     }
-    if (btn) { btn.textContent = '✅ Sincronitzat'; btn.style.background='#1E6832'; btn.disabled = false; }
-    setTimeout(() => { if(btn){btn.textContent='☁ Sync Núvol';btn.style.background='#2E86C1';} }, 3000);
   } catch(err) {
-    console.error('Gist sync error:', err);
-    showToast('⚠ Error de sincronització: ' + err.message);
-    if (btn) { btn.textContent = '⚠ Error Sync'; btn.style.background='#922B21'; btn.disabled = false; }
-    setTimeout(() => { if(btn){btn.textContent='☁ Sync Núvol';btn.style.background='#2E86C1';} }, 4000);
+    console.error('Supabase error:', err);
+    showToast('⚠ Error desant: ' + err.message);
+    if (btn) { btn.textContent = '⚠ Error'; btn.style.background='#922B21'; btn.disabled = false; }
+    setTimeout(() => { if(btn){btn.textContent='💾 Desar';btn.style.background='';btn.className='btn btn-primary';} }, 4000);
   }
 }
 
 async function loadFromGist() {
-
-  const btn = document.getElementById('btn-gist-sync');
-  if (!gistId) { showToast('ℹ No hi ha Gist configurat. Fes Sync primer per crear-lo.'); return; }
-  if (btn) { btn.textContent = '⬇ Carregant...'; btn.disabled = true; }
   try {
-    const resp = await fetch('https://api.github.com/gists/' + gistId, {
-      headers: { 'Authorization': 'token ' + GIST_TOKEN }
+    const resp = await fetch('https://blcvajtldbnqpnyqbebk.supabase.co/rest/v1/cadi_data?id=eq.planificacio-re-plantilles&select=data', {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsY3ZhanRsZGJucXBueXFiZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODcxOTgsImV4cCI6MjA5ODU2MzE5OH0.cUUi9Oyi8Z0S5QuuI9j9fhl_8LvR1WnqBHzKnfhx134'
+      }
     });
-    const data = await resp.json();
-    const raw = data.files[GIST_FILENAME]?.content;
-    if (!raw) { showToast('⚠ No s\'ha trobat el fitxer al Gist'); return; }
-    const parsed = JSON.parse(raw);
-    if (parsed.tasks) { tasks = parsed.tasks; localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+    const rows = await resp.json();
+    if (!rows || rows.length === 0 || !rows[0].data) {
+      showToast('ℹ No hi ha dades al núvol. Fes Desar primer.');
+      return;
+    }
+    const parsed = rows[0].data;
+    if (parsed.tasks && parsed.tasks.length > 0) { tasks = parsed.tasks; localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
     if (parsed.team) { team = parsed.team; localStorage.setItem(TEAM_KEY, JSON.stringify(team)); }
     if (parsed.alma) { witAlmaMap = parsed.alma; localStorage.setItem(ALMA_KEY, JSON.stringify(witAlmaMap)); }
     render(); updateSummary();
-    showToast('✅ Dades carregades del núvol correctament');
-    if (btn) { btn.textContent = '☁ Sync Núvol'; btn.style.background='#2E86C1'; btn.disabled = false; }
+    showToast('✅ Dades actualitzades del núvol · ' + new Date().toLocaleTimeString('ca'));
   } catch(err) {
-    showToast('⚠ Error carregant del Gist: ' + err.message);
-    if (btn) { btn.textContent = '☁ Sync Núvol'; btn.style.background='#2E86C1'; btn.disabled = false; }
+    showToast('⚠ Error carregant: ' + err.message);
   }
 }
 
@@ -3624,26 +3615,23 @@ window.onload=async function() {
   loadTeam(); updateTopbarNames();
   loadAlmaMap();
   // Auto-load from Gist if available (silent, no blocking)
-  if (gistId && GIST_TOKEN) {
-    try {
-      const resp = await fetch('https://api.github.com/gists/' + gistId, {
-        headers: { 'Authorization': 'token ' + GIST_TOKEN }
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const raw = data.files[GIST_FILENAME]?.content;
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.tasks && parsed.tasks.length > 0) {
-            tasks = parsed.tasks;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-            if (parsed.team) { team = parsed.team; localStorage.setItem(TEAM_KEY, JSON.stringify(team)); }
-            if (parsed.alma) { witAlmaMap = parsed.alma; localStorage.setItem(ALMA_KEY, JSON.stringify(witAlmaMap)); }
-          }
+  try {
+    const _resp = await fetch(SUPABASE_URL + '/rest/v1/cadi_data?id=eq.' + RECORD_ID + '&select=data', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (_resp.ok) {
+      const _rows = await _resp.json();
+      if (_rows && _rows.length > 0 && _rows[0].data) {
+        const _parsed = _rows[0].data;
+        if (_parsed.tasks && _parsed.tasks.length > 0) {
+          tasks = _parsed.tasks;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          if (_parsed.team) { team = _parsed.team; localStorage.setItem(TEAM_KEY, JSON.stringify(team)); }
+          if (_parsed.alma) { witAlmaMap = _parsed.alma; localStorage.setItem(ALMA_KEY, JSON.stringify(witAlmaMap)); }
         }
       }
-    } catch(e) { console.warn('Auto-load Gist failed (offline?)', e); }
-  }
+    }
+  } catch(e) { console.warn('Auto-load Supabase failed:', e); }
   // init filteredIds to all
   tasks.forEach(t=>filteredIds.add(t.id));
   document.getElementById('filter-count').textContent=tasks.length+' tasques';
