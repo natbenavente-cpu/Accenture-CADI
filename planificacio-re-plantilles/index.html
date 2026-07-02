@@ -372,10 +372,9 @@
     <button class="btn btn-outline" onclick="openWitAlma()">🔗 Configurar WIT-ALMA</button>
     <button class="btn btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
     <button class="btn" style="background:#1E6832;color:#fff;font-weight:700;" onclick="openExportAlma()">📤 Exportar Incurrido ALMA</button>
-    <button class="btn" id="btn-gist-sync" style="background:#2E86C1;color:#fff;font-weight:700;" onclick="saveData();syncToGist();" title="Sincronitzar al núvol GitHub Gist">☁ Sync Núvol</button>
-    <button class="btn btn-outline" onclick="loadFromGist()" title="Carregar dades del núvol">⬇ Carregar núvol</button>
+    <button class="btn btn-outline" onclick="loadFromGist()" title="Carregar dades del núvol">⬇ Actualitzar</button>
     <button class="btn btn-outline" onclick="resetData()">↺ Reset</button>
-    <button class="btn btn-primary" onclick="saveAll()" id="btn-save-file" style="">💾 Desar al núvol</button>
+    <button class="btn btn-primary" onclick="saveAll()" id="btn-save-file" style="background:#E8A020;">💾 Desar</button>
   </div>
 </div>
 
@@ -1871,7 +1870,7 @@ const PHASE_SEPS = [
 
 const GIST_TOKEN = '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';
 const GIST_FILENAME = 'cadi_plan_data.json';
-let gistId = localStorage.getItem('cadi_gist_id_v2') || '';
+let gistId = localStorage.getItem('cadi_gist_id_v2') || '96fdef3db0f5968b4745c908b7321e5f';
 
 const STORAGE_KEY = 'cadi_plan_v5';
 
@@ -1899,6 +1898,7 @@ function saveData() {
 
 // ── GITHUB GIST SYNC ─────────────────────────────────────────────────
 async function syncToGist() {
+
   const btn = document.getElementById('btn-gist-sync');
   if (btn) { btn.textContent = '☁ Sincronitzant...'; btn.disabled = true; btn.style.background='#555'; }
   const payload = JSON.stringify({ tasks, team, alma: witAlmaMap });
@@ -1937,6 +1937,7 @@ async function syncToGist() {
 }
 
 async function loadFromGist() {
+
   const btn = document.getElementById('btn-gist-sync');
   if (!gistId) { showToast('ℹ No hi ha Gist configurat. Fes Sync primer per crear-lo.'); return; }
   if (btn) { btn.textContent = '⬇ Carregant...'; btn.disabled = true; }
