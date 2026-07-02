@@ -1871,7 +1871,7 @@ const PHASE_SEPS = [
 
 const GIST_TOKEN = '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';
 const GIST_FILENAME = 'cadi_plan_data.json';
-let gistId = localStorage.getItem('cadi_gist_id_v2') || '96fdef3db0f5968b4745c908b7321e5f';
+let gistId = localStorage.getItem('cadi_gist_id_v2') || '';
 
 const STORAGE_KEY = 'cadi_plan_v5';
 
@@ -1899,7 +1899,6 @@ function saveData() {
 
 // ── GITHUB GIST SYNC ─────────────────────────────────────────────────
 async function syncToGist() {
-
   const btn = document.getElementById('btn-gist-sync');
   if (btn) { btn.textContent = '☁ Sincronitzant...'; btn.disabled = true; btn.style.background='#555'; }
   const payload = JSON.stringify({ tasks, team, alma: witAlmaMap });
@@ -1938,7 +1937,6 @@ async function syncToGist() {
 }
 
 async function loadFromGist() {
-
   const btn = document.getElementById('btn-gist-sync');
   if (!gistId) { showToast('ℹ No hi ha Gist configurat. Fes Sync primer per crear-lo.'); return; }
   if (btn) { btn.textContent = '⬇ Carregant...'; btn.disabled = true; }
